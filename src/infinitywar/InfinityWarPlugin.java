@@ -1,38 +1,26 @@
 package infinitywar;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import arc.Events;
 import arc.util.*;
 import mindustry.Vars;
 import mindustry.content.Blocks;
-import mindustry.game.EventType.WorldLoadEndEvent;
+import mindustry.gen.Groups;
 import mindustry.mod.*;
 import mindustry.world.consumers.ConsumeItems;
 import mindustry.world.consumers.ConsumeLiquid;
-import mindustry.world.consumers.ConsumeLiquids;
 
 public class InfinityWarPlugin extends Plugin {
-    private volatile AtomicBoolean isFilling = new AtomicBoolean(false);
 
     @Override
     public void init() {
-        Events.on(WorldLoadEndEvent.class, (e) -> {
-            Timer.schedule(() -> {
-                if (isFilling.get())
-                    return;
-
-                isFilling.set(true);
-
-                for (var tile : Vars.world.tiles) {
-                    var build = tile.build;
-                    var block = tile.block();
-
-                    if (build == null || block == null)
-                        continue;
+        Timer.schedule(() -> {
+            if (!Vars.state.isPlaying())
+                return;
+            try {
+                Groups.build.each(build -> {
+                    var block = build.block();
 
                     if (build.items == null)
-                        continue;
+                        return;
 
                     for (var consumer : block.consumers) {
                         if (consumer instanceof ConsumeItems consumeItems) {
@@ -46,53 +34,36 @@ public class InfinityWarPlugin extends Plugin {
                             }
 
                             for (var stack : consumeItems.items) {
-                                if (build.items.get(stack.item) < 1000) {
+                                if (build.items.get(stack.item) < 100) {
                                     build.items.add(stack.item, 1000);
                                 }
                             }
                         } else if ((consumer instanceof ConsumeLiquid consumeLiquid)) {
-                            if (build.liquids.get(consumeLiquid.liquid) < 1000) {
+                            if (build.liquids.get(consumeLiquid.liquid) < 100) {
                                 build.liquids.add(consumeLiquid.liquid, 1000);
                             }
-
-                        } else if ((consumer instanceof ConsumeLiquids consumeLiquid)) {
-                            for (var stack : consumeLiquid.liquids)
-                                if (build.liquids.get(stack.liquid) < 1000) {
-                                    build.liquids.add(stack.liquid, 1000);
-                                }
-
                         }
                     }
+
                     for (var item : Vars.content.items()) {
                         if (block.consumesItem(item)) {
-                            if (build.items.get(item) < 1000) {
+                            if (build.items.get(item) < 100) {
                                 build.items.add(item, 1000);
                             }
                         }
                     }
 
                     for (var liquid : Vars.content.liquids()) {
-
                         if (block.consumesLiquid(liquid)) {
-                            if (build.liquids.get(liquid) < 1000) {
+                            if (build.liquids.get(liquid) < 100) {
                                 build.liquids.add(liquid, 1000);
                             }
                         }
                     }
-                }
-                isFilling.set(false);
-            }, 0, 1);
-        });
-
-    }
-
-    @Override
-    public void registerServerCommands(CommandHandler handler) {
-
-    }
-
-    @Override
-    public void registerClientCommands(CommandHandler handler) {
-
+                });
+            } catch (Exception e) {
+                Log.err(e);
+            }
+        }, 10, 1);
     }
 }
