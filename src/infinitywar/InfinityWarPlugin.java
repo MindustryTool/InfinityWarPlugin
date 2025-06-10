@@ -2,10 +2,12 @@ package infinitywar;
 
 import java.lang.ref.WeakReference;
 import java.util.HashSet;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import arc.Core;
 import arc.Events;
-import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.content.Blocks;
 import mindustry.content.Items;
@@ -19,31 +21,27 @@ import mindustry.world.consumers.ConsumeLiquids;
 
 public class InfinityWarPlugin extends Plugin {
 
-    private HashSet<WeakReference<Building>> consumeBuildings = new HashSet<>();
+    private final HashSet<WeakReference<Building>> consumeBuildings = new HashSet<>();
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private long nextUpdateBuildTime = System.currentTimeMillis();
-    private long nextFillTime = System.currentTimeMillis();
 
     @Override
     public void init() {
-        Timer.schedule(() -> {
+        executor.schedule(() -> {
             try {
-                Thread.sleep(10);
                 if (!Vars.state.isPlaying())
                     return;
 
                 if (System.currentTimeMillis() >= nextUpdateBuildTime) {
                     updateBuilding();
-                    nextUpdateBuildTime = System.currentTimeMillis() + 5000;
+                    nextUpdateBuildTime = System.currentTimeMillis() + 10000;
                 }
 
-                if (System.currentTimeMillis() >= nextFillTime) {
-                    fillBuilding();
-                    nextFillTime = System.currentTimeMillis() + 1000;
-                }
+                fillBuilding();
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }, 0, 0.2f);
+        }, 1, TimeUnit.SECONDS);
 
         Events.on(BlockBuildEndEvent.class, event -> {
             if (event.tile.build == null) {
