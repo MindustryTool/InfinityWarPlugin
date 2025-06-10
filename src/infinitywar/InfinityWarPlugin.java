@@ -26,7 +26,9 @@ public class InfinityWarPlugin extends Plugin {
         var thread = new Thread(() -> {
             while (true) {
                 try {
-                    System.out.println("Update");
+                    System.out
+                            .println("Update: " + Vars.state.isPlaying() + " Next build update: " + nextUpdateBuildTime
+                                    + " Next fill: " + nextFillTime + " Current: " + System.currentTimeMillis());
                     Thread.sleep(10);
                     if (!Vars.state.isPlaying())
                         return;
@@ -66,11 +68,6 @@ public class InfinityWarPlugin extends Plugin {
 
     private void updateBuilding() {
         synchronized (consumeBuildings) {
-            int total = Groups.build.size();
-
-            if (total == 0)
-                return;
-
             consumeBuildings.removeIf(ref -> ref.get() == null);
 
             Groups.build.each(build -> {
