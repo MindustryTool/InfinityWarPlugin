@@ -5,6 +5,7 @@ import java.util.HashSet;
 
 import arc.Core;
 import arc.Events;
+import arc.util.Timer;
 import mindustry.Vars;
 import mindustry.content.Blocks;
 import mindustry.content.Items;
@@ -23,7 +24,7 @@ public class InfinityWarPlugin extends Plugin {
 
     @Override
     public void init() {
-        var thread = new Thread(() -> {
+        Timer.schedule(() -> {
             while (true) {
                 try {
                     System.out
@@ -46,9 +47,7 @@ public class InfinityWarPlugin extends Plugin {
                     e.printStackTrace();
                 }
             }
-        });
-        thread.setDaemon(true);
-        thread.start();
+        }, 0, 0.2f);
 
         Events.on(BlockBuildEndEvent.class, event -> {
             if (event.tile.build == null) {
