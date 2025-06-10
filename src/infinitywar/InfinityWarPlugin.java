@@ -1,5 +1,8 @@
 package infinitywar;
 
+import java.lang.ref.WeakReference;
+import java.util.HashSet;
+
 import arc.Core;
 import arc.Events;
 import mindustry.Vars;
@@ -14,31 +17,77 @@ import mindustry.world.consumers.ConsumeLiquid;
 
 public class InfinityWarPlugin extends Plugin {
 
+    private HashSet<WeakReference<Building>> consumeBuildings = new HashSet<>();
+    private long nextUpdateBuildTime = System.currentTimeMillis();
+    private long nextFillTime = System.currentTimeMillis();
+
     @Override
     public void init() {
         var thread = new Thread(() -> {
             while (true) {
                 try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
+                    if (!Vars.state.isPlaying())
+                        return;
+
+                    if (System.currentTimeMillis() < nextUpdateBuildTime) {
+                        updateBuilding();
+                        nextUpdateBuildTime = System.currentTimeMillis() + 5000;
+                    }
+
+                    if (System.currentTimeMillis() < nextFillTime) {
+                        fillBuilding();
+                        nextFillTime = System.currentTimeMillis() + 1000;
+                    }
+
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
-
-                if (!Vars.state.isPlaying())
-                    return;
-
-                int total = Groups.build.size();
-
-                if (total == 0)
-                    return;
-
-                Groups.build.each(build -> processBuild(build));
             }
         });
         thread.setDaemon(true);
         thread.start();
 
-        Events.on(BlockBuildEndEvent.class, event -> processBuild(event.tile.build));
+        Events.on(BlockBuildEndEvent.class, event -> {
+            if (event.tile.build == null) {
+                return;
+            }
+
+            if (consumeBuildings.stream().noneMatch(weak -> weak.get() == event.tile.build)) {
+                consumeBuildings.add(new WeakReference<>(event.tile.build));
+            }
+
+            processBuild(event.tile.build);
+        });
+    }
+
+    private void updateBuilding() {
+        synchronized (consumeBuildings) {
+            int total = Groups.build.size();
+
+            if (total == 0)
+                return;
+
+            consumeBuildings.removeIf(ref -> ref.get() == null);
+
+            Groups.build.each(build -> {
+                if (consumeBuildings.stream().noneMatch(weak -> weak.get() == build)) {
+                    consumeBuildings.add(new WeakReference<>(build));
+                }
+            });
+        }
+    }
+
+    private void fillBuilding() {
+        synchronized (consumeBuildings) {
+            for (var weak : consumeBuildings) {
+                var build = weak.get();
+
+                if (build == null)
+                    continue;
+
+                processBuild(build);
+            }
+        }
     }
 
     private void processBuild(Building build) {
