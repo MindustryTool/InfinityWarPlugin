@@ -15,6 +15,7 @@ import mindustry.gen.Groups;
 import mindustry.mod.Plugin;
 import mindustry.world.consumers.ConsumeItems;
 import mindustry.world.consumers.ConsumeLiquid;
+import mindustry.world.consumers.ConsumeLiquids;
 
 public class InfinityWarPlugin extends Plugin {
 
@@ -81,6 +82,8 @@ public class InfinityWarPlugin extends Plugin {
                 return true;
             } else if (consumer instanceof ConsumeLiquid) {
                 return true;
+            } else if (consumer instanceof ConsumeLiquids) {
+                return true;
             }
         }
 
@@ -116,6 +119,12 @@ public class InfinityWarPlugin extends Plugin {
             } else if (consumer instanceof ConsumeLiquid cl) {
                 if (build.liquids.get(cl.liquid) < 2000) {
                     Core.app.post(() -> build.liquids.add(cl.liquid, 2000));
+                }
+            } else if (consumer instanceof ConsumeLiquids cl) {
+                for (var stack : cl.liquids) {
+                    if (build.liquids.get(stack.liquid) < 2000) {
+                        Core.app.post(() -> build.liquids.add(stack.liquid, 2000));
+                    }
                 }
             }
         }
