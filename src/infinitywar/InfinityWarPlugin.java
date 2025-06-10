@@ -18,6 +18,7 @@ import mindustry.mod.Plugin;
 import mindustry.world.consumers.ConsumeItemFilter;
 import mindustry.world.consumers.ConsumeItems;
 import mindustry.world.consumers.ConsumeLiquid;
+import mindustry.world.consumers.ConsumeLiquidFilter;
 import mindustry.world.consumers.ConsumeLiquids;
 
 public class InfinityWarPlugin extends Plugin {
@@ -129,6 +130,12 @@ public class InfinityWarPlugin extends Plugin {
                 for (var item : Vars.content.items().select(cif.filter)) {
                     if (build.items.get(item) < 2000) {
                         Core.app.post(() -> build.items.add(item, 2000));
+                    }
+                }
+            } else if (consumer instanceof ConsumeLiquidFilter clf) {
+                for (var liquid : Vars.content.liquids().select(clf.filter)) {
+                    if (build.liquids.get(liquid) < 2000) {
+                        Core.app.post(() -> build.liquids.add(liquid, 2000));
                     }
                 }
             }
