@@ -51,9 +51,7 @@ public class InfinityWarPlugin extends Plugin {
 
             processBuild(event.tile.build);
 
-            if (event.tile.build.block().consumers.length > 0//
-                    && consumeBuildings.stream().noneMatch(weak -> weak.get() == event.tile.build)//
-            ) {
+            if (isFillable(event.tile.build)) {
                 consumeBuildings.add(new WeakReference<>(event.tile.build));
             }
 
@@ -64,23 +62,34 @@ public class InfinityWarPlugin extends Plugin {
         consumeBuildings.removeIf(ref -> ref.get() == null);
 
         Groups.build.each(build -> {
-            System.out.println("Check building: " + build);
-
-            if (build.block().consumers.length > 0
-                    && consumeBuildings.stream().noneMatch(weak -> weak.get() == build)//
-            ) {
-                System.out.println("Add building: " + build);
-
+            if (isFillable(build)) {
                 consumeBuildings.add(new WeakReference<>(build));
             }
         });
     }
 
+    public boolean isFillable(Building build) {
+        if (build == null)
+            return false;
+
+        if (consumeBuildings.stream().anyMatch(weak -> weak.get() == build)) {
+            return false;
+        }
+
+        for (var consumer : build.block().consumers) {
+            if (consumer instanceof ConsumeItems) {
+                return true;
+            } else if (consumer instanceof ConsumeLiquid) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private void fillBuilding() {
         for (var weak : consumeBuildings) {
             var build = weak.get();
-
-            System.out.println("Filling building: " + build);
 
             if (build == null)
                 continue;
@@ -100,12 +109,12 @@ public class InfinityWarPlugin extends Plugin {
                 }
 
                 for (var stack : ci.items) {
-                    if (build.items.get(stack.item) < 1000) {
+                    if (build.items.get(stack.item) < 2000) {
                         Core.app.post(() -> build.items.add(stack.item, 2000));
                     }
                 }
             } else if (consumer instanceof ConsumeLiquid cl) {
-                if (build.liquids.get(cl.liquid) < 1000) {
+                if (build.liquids.get(cl.liquid) < 2000) {
                     Core.app.post(() -> build.liquids.add(cl.liquid, 2000));
                 }
             }
