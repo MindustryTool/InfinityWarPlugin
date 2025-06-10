@@ -43,7 +43,7 @@ public class InfinityWarPlugin extends Plugin {
                     }
                 }
             });
-        }, 5f, 0.5f);
+        }, 0, 0.5f);
     }
 
     private void processBuild(Building build) {
