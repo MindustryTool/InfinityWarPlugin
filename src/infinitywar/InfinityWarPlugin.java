@@ -63,35 +63,31 @@ public class InfinityWarPlugin extends Plugin {
     }
 
     private void updateBuilding() {
-        synchronized (consumeBuildings) {
-            consumeBuildings.removeIf(ref -> ref.get() == null);
+        consumeBuildings.removeIf(ref -> ref.get() == null);
 
-            Groups.build.each(build -> {
-                System.out.println("Check building: " + build);
+        Groups.build.each(build -> {
+            System.out.println("Check building: " + build);
 
-                if (build.block().consumers.length > 0
-                        && consumeBuildings.stream().noneMatch(weak -> weak.get() == build)//
-                ) {
-                    System.out.println("Add building: " + build);
+            if (build.block().consumers.length > 0
+                    && consumeBuildings.stream().noneMatch(weak -> weak.get() == build)//
+            ) {
+                System.out.println("Add building: " + build);
 
-                    consumeBuildings.add(new WeakReference<>(build));
-                }
-            });
-        }
+                consumeBuildings.add(new WeakReference<>(build));
+            }
+        });
     }
 
     private void fillBuilding() {
-        synchronized (consumeBuildings) {
-            for (var weak : consumeBuildings) {
-                var build = weak.get();
+        for (var weak : consumeBuildings) {
+            var build = weak.get();
 
-                System.out.println("Filling building: " + build);
+            System.out.println("Filling building: " + build);
 
-                if (build == null)
-                    continue;
+            if (build == null)
+                continue;
 
-                processBuild(build);
-            }
+            processBuild(build);
         }
     }
 
