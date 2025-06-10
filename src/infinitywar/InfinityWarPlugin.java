@@ -27,9 +27,6 @@ public class InfinityWarPlugin extends Plugin {
         Timer.schedule(() -> {
             while (true) {
                 try {
-                    System.out
-                            .println("Update: " + Vars.state.isPlaying() + " Next build update: " + nextUpdateBuildTime
-                                    + " Next fill: " + nextFillTime + " Current: " + System.currentTimeMillis());
                     Thread.sleep(10);
                     if (!Vars.state.isPlaying())
                         return;
