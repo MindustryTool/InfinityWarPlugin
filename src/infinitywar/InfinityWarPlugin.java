@@ -60,7 +60,7 @@ public class InfinityWarPlugin extends Plugin {
     }
 
     private void updateBuilding() {
-        consumeBuildings.removeIf(ref -> ref.get() == null);
+        consumeBuildings.removeIf(ref -> ref.get() == null || !ref.get().isAdded());
 
         Groups.build.each(build -> {
             if (isFillable(build)) {
