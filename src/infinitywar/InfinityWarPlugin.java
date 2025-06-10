@@ -1,10 +1,11 @@
 package infinitywar;
 
 import arc.Core;
-import arc.util.Timer;
+import arc.Events;
 import mindustry.Vars;
 import mindustry.content.Blocks;
 import mindustry.content.Items;
+import mindustry.game.EventType.BlockBuildEndEvent;
 import mindustry.gen.Building;
 import mindustry.gen.Groups;
 import mindustry.mod.Plugin;
@@ -15,17 +16,29 @@ public class InfinityWarPlugin extends Plugin {
 
     @Override
     public void init() {
-        Timer.schedule(() -> {
-            if (!Vars.state.isPlaying())
-                return;
+        var thread = new Thread(() -> {
+            while (true) {
+                try {
+                    Thread.sleep(500l);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
 
-            int total = Groups.build.size();
+                if (!Vars.state.isPlaying())
+                    return;
 
-            if (total == 0)
-                return;
+                int total = Groups.build.size();
 
-            Groups.build.each(build -> processBuild(build));
-        }, 0, 0.5f);
+                if (total == 0)
+                    return;
+
+                Groups.build.each(build -> processBuild(build));
+            }
+        });
+        thread.setDaemon(true);
+        thread.start();
+
+        Events.on(BlockBuildEndEvent.class, event -> processBuild(event.tile.build));
     }
 
     private void processBuild(Building build) {
