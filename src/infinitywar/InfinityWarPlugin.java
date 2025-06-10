@@ -26,8 +26,6 @@ public class InfinityWarPlugin extends Plugin {
         var thread = new Thread(() -> {
             while (true) {
                 try {
-                    Thread.sleep(100);
-
                     if (!Vars.state.isPlaying())
                         return;
 
@@ -55,7 +53,9 @@ public class InfinityWarPlugin extends Plugin {
 
             processBuild(event.tile.build);
 
-            if (consumeBuildings.stream().noneMatch(weak -> weak.get() == event.tile.build)) {
+            if (event.tile.build.block().consumers.length > 0//
+                    && consumeBuildings.stream().noneMatch(weak -> weak.get() == event.tile.build)//
+            ) {
                 consumeBuildings.add(new WeakReference<>(event.tile.build));
             }
 
@@ -72,9 +72,13 @@ public class InfinityWarPlugin extends Plugin {
             consumeBuildings.removeIf(ref -> ref.get() == null);
 
             Groups.build.each(build -> {
-                if (!build.dead
-                        && build.block().consumers.length > 0
-                        && consumeBuildings.stream().noneMatch(weak -> weak.get() == build)) {
+                System.out.println("Check building: " + build);
+
+                if (build.block().consumers.length > 0
+                        && consumeBuildings.stream().noneMatch(weak -> weak.get() == build)//
+                ) {
+                    System.out.println("Add building: " + build);
+
                     consumeBuildings.add(new WeakReference<>(build));
                 }
             });
@@ -85,6 +89,8 @@ public class InfinityWarPlugin extends Plugin {
         synchronized (consumeBuildings) {
             for (var weak : consumeBuildings) {
                 var build = weak.get();
+
+                System.out.println("Filling building: " + build);
 
                 if (build == null)
                     continue;
