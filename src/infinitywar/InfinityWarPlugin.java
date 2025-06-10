@@ -31,12 +31,12 @@ public class InfinityWarPlugin extends Plugin {
                     if (!Vars.state.isPlaying())
                         return;
 
-                    if (System.currentTimeMillis() <= nextUpdateBuildTime) {
+                    if (System.currentTimeMillis() >= nextUpdateBuildTime) {
                         updateBuilding();
                         nextUpdateBuildTime = System.currentTimeMillis() + 5000;
                     }
 
-                    if (System.currentTimeMillis() <= nextFillTime) {
+                    if (System.currentTimeMillis() >= nextFillTime) {
                         fillBuilding();
                         nextFillTime = System.currentTimeMillis() + 1000;
                     }
@@ -53,11 +53,12 @@ public class InfinityWarPlugin extends Plugin {
                 return;
             }
 
+            processBuild(event.tile.build);
+
             if (consumeBuildings.stream().noneMatch(weak -> weak.get() == event.tile.build)) {
                 consumeBuildings.add(new WeakReference<>(event.tile.build));
             }
 
-            processBuild(event.tile.build);
         });
     }
 
