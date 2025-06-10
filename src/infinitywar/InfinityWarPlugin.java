@@ -26,21 +26,20 @@ public class InfinityWarPlugin extends Plugin {
         var thread = new Thread(() -> {
             while (true) {
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(100);
 
                     if (!Vars.state.isPlaying())
                         return;
 
-                    if (System.currentTimeMillis() < nextUpdateBuildTime) {
-                        updateBuilding();
-                        nextUpdateBuildTime = System.currentTimeMillis() + 5000;
-                    }
-
-                    if (System.currentTimeMillis() < nextFillTime) {
+                    if (System.currentTimeMillis() <= nextFillTime) {
                         fillBuilding();
                         nextFillTime = System.currentTimeMillis() + 1000;
                     }
 
+                    if (System.currentTimeMillis() <= nextUpdateBuildTime) {
+                        updateBuilding();
+                        nextUpdateBuildTime = System.currentTimeMillis() + 5000;
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -72,7 +71,9 @@ public class InfinityWarPlugin extends Plugin {
             consumeBuildings.removeIf(ref -> ref.get() == null);
 
             Groups.build.each(build -> {
-                if (consumeBuildings.stream().noneMatch(weak -> weak.get() == build)) {
+                if (!build.dead
+                        && build.block().consumers.length > 0
+                        && consumeBuildings.stream().noneMatch(weak -> weak.get() == build)) {
                     consumeBuildings.add(new WeakReference<>(build));
                 }
             });
@@ -94,9 +95,6 @@ public class InfinityWarPlugin extends Plugin {
 
     private void processBuild(Building build) {
         var block = build.block();
-
-        if (build.items == null)
-            return;
 
         for (var consumer : block.consumers) {
             if (consumer instanceof ConsumeItems ci) {
