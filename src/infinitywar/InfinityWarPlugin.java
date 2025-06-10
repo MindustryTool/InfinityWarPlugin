@@ -31,14 +31,14 @@ public class InfinityWarPlugin extends Plugin {
                     if (!Vars.state.isPlaying())
                         return;
 
-                    if (System.currentTimeMillis() <= nextFillTime) {
-                        fillBuilding();
-                        nextFillTime = System.currentTimeMillis() + 1000;
-                    }
-
                     if (System.currentTimeMillis() <= nextUpdateBuildTime) {
                         updateBuilding();
                         nextUpdateBuildTime = System.currentTimeMillis() + 5000;
+                    }
+
+                    if (System.currentTimeMillis() <= nextFillTime) {
+                        fillBuilding();
+                        nextFillTime = System.currentTimeMillis() + 1000;
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
