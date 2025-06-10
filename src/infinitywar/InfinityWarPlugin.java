@@ -29,7 +29,7 @@ public class InfinityWarPlugin extends Plugin {
 
     @Override
     public void init() {
-        executor.schedule(() -> {
+        executor.scheduleWithFixedDelay(() -> {
             try {
                 if (!Vars.state.isPlaying())
                     return;
@@ -43,7 +43,7 @@ public class InfinityWarPlugin extends Plugin {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }, 1, TimeUnit.SECONDS);
+        }, 0, 1, TimeUnit.SECONDS);
 
         Events.on(BlockBuildEndEvent.class, event -> {
             if (event.tile.build == null) {
