@@ -84,6 +84,10 @@ public class InfinityWarPlugin extends Plugin {
                 return true;
             } else if (consumer instanceof ConsumeLiquids) {
                 return true;
+            } else if (consumer instanceof ConsumeItemFilter) {
+                return true;
+            } else if (consumer instanceof ConsumeLiquidFilter) {
+                return true;
             }
         }
 
