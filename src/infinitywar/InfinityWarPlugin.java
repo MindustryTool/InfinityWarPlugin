@@ -26,6 +26,8 @@ public class InfinityWarPlugin extends Plugin {
         var thread = new Thread(() -> {
             while (true) {
                 try {
+                    System.out.println("Update");
+                    Thread.sleep(10);
                     if (!Vars.state.isPlaying())
                         return;
 
