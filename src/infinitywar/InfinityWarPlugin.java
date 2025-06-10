@@ -53,20 +53,25 @@ public class InfinityWarPlugin extends Plugin {
             processBuild(event.tile.build);
 
             if (isFillable(event.tile.build)) {
-                consumeBuildings.add(new WeakReference<>(event.tile.build));
+                executor.submit(() -> {
+                    synchronized (consumeBuildings) {
+                        consumeBuildings.add(new WeakReference<>(event.tile.build));
+                    }
+                });
             }
-
         });
     }
 
     private void updateBuilding() {
-        consumeBuildings.removeIf(ref -> ref.get() == null || !ref.get().isAdded());
+        synchronized (consumeBuildings) {
+            consumeBuildings.removeIf(ref -> ref.get() == null || !ref.get().isAdded());
 
-        Groups.build.each(build -> {
-            if (isFillable(build)) {
-                consumeBuildings.add(new WeakReference<>(build));
-            }
-        });
+            Groups.build.each(build -> {
+                if (isFillable(build)) {
+                    consumeBuildings.add(new WeakReference<>(build));
+                }
+            });
+        }
     }
 
     public boolean isFillable(Building build) {
