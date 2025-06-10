@@ -25,24 +25,22 @@ public class InfinityWarPlugin extends Plugin {
     @Override
     public void init() {
         Timer.schedule(() -> {
-            while (true) {
-                try {
-                    Thread.sleep(10);
-                    if (!Vars.state.isPlaying())
-                        return;
+            try {
+                Thread.sleep(10);
+                if (!Vars.state.isPlaying())
+                    return;
 
-                    if (System.currentTimeMillis() >= nextUpdateBuildTime) {
-                        updateBuilding();
-                        nextUpdateBuildTime = System.currentTimeMillis() + 5000;
-                    }
-
-                    if (System.currentTimeMillis() >= nextFillTime) {
-                        fillBuilding();
-                        nextFillTime = System.currentTimeMillis() + 1000;
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
+                if (System.currentTimeMillis() >= nextUpdateBuildTime) {
+                    updateBuilding();
+                    nextUpdateBuildTime = System.currentTimeMillis() + 5000;
                 }
+
+                if (System.currentTimeMillis() >= nextFillTime) {
+                    fillBuilding();
+                    nextFillTime = System.currentTimeMillis() + 1000;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }, 0, 0.2f);
 
