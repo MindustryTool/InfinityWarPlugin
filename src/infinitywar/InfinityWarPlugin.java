@@ -1,7 +1,9 @@
 package infinitywar;
 
 import java.lang.ref.WeakReference;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -23,7 +25,8 @@ import mindustry.world.consumers.ConsumeLiquids;
 
 public class InfinityWarPlugin extends Plugin {
 
-    private final HashSet<WeakReference<Building>> consumeBuildings = new HashSet<>();
+    private final Set<WeakReference<Building>> consumeBuildings = Collections
+            .newSetFromMap(new ConcurrentHashMap<WeakReference<Building>, Boolean>());
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private long nextUpdateBuildTime = System.currentTimeMillis();
 
