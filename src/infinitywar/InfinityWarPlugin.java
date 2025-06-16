@@ -55,12 +55,6 @@ public class InfinityWarPlugin extends Plugin {
 
             try {
                 processBuild(event.tile.build);
-
-                synchronized (consumeBuildings) {
-                    if (isFillable(event.tile.build)) {
-                        consumeBuildings.add(new WeakReference<>(event.tile.build));
-                    }
-                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
