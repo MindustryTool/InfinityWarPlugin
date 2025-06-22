@@ -73,7 +73,7 @@ public class InfinityWarPlugin extends Plugin {
         }
     }
 
-    public boolean isFillable(Building build) {
+    public synchronized boolean isFillable(Building build) {
         if (build == null)
             return false;
 
