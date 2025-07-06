@@ -55,25 +55,23 @@ public class InfinityWarPlugin extends Plugin {
                 }
 
                 processBuild(event.tile.build);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
         });
     }
 
-    private void updateBuilding() {
-        synchronized (this) {
-            consumeBuildings.removeIf(ref -> ref.get() == null || !ref.get().isAdded());
+    private synchronized void updateBuilding() {
+        consumeBuildings.removeIf(ref -> ref.get() == null || !ref.get().isAdded());
 
-            Groups.build.each(build -> {
-                if (isFillable(build)) {
-                    consumeBuildings.add(new WeakReference<>(build));
-                }
-            });
-        }
+        Groups.build.each(build -> {
+            if (isFillable(build)) {
+                consumeBuildings.add(new WeakReference<>(build));
+            }
+        });
     }
 
-    public synchronized boolean isFillable(Building build) {
+    public boolean isFillable(Building build) {
         if (build == null)
             return false;
 
