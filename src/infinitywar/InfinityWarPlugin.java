@@ -55,13 +55,7 @@ public class InfinityWarPlugin extends Plugin {
                 }
 
                 processBuild(event.tile.build);
-
-                synchronized (this) {
-                    if (isFillable(event.tile.build)) {
-                        consumeBuildings.add(new WeakReference<>(event.tile.build));
-                    }
-                }
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         });
@@ -79,7 +73,7 @@ public class InfinityWarPlugin extends Plugin {
         }
     }
 
-    public boolean isFillable(Building build) {
+    public synchronized boolean isFillable(Building build) {
         if (build == null)
             return false;
 
