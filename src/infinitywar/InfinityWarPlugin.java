@@ -43,32 +43,32 @@ public class InfinityWarPlugin extends Plugin {
                 }
 
                 fillBuilding();
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
         }, 0, 1, TimeUnit.SECONDS);
 
         Events.on(BlockBuildEndEvent.class, event -> {
-            if (event.tile.build == null) {
-                return;
-            }
-
             try {
+                if (event.tile.build == null) {
+                    return;
+                }
+
                 processBuild(event.tile.build);
 
-                synchronized (consumeBuildings) {
+                synchronized (this) {
                     if (isFillable(event.tile.build)) {
                         consumeBuildings.add(new WeakReference<>(event.tile.build));
                     }
                 }
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
         });
     }
 
     private void updateBuilding() {
-        synchronized (consumeBuildings) {
+        synchronized (this) {
             consumeBuildings.removeIf(ref -> ref.get() == null || !ref.get().isAdded());
 
             Groups.build.each(build -> {
