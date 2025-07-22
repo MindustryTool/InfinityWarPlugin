@@ -79,7 +79,7 @@ public class InfinityWarPlugin extends Plugin {
             return false;
         }
 
-        for (var consumer : build.block().consumers) {
+        for (var consumer : build.block.consumers) {
             if (consumer instanceof ConsumeItems) {
                 return true;
             } else if (consumer instanceof ConsumeLiquid) {
@@ -108,7 +108,7 @@ public class InfinityWarPlugin extends Plugin {
     }
 
     private void processBuild(Building build) {
-        var block = build.block();
+        var block = build.block;
 
         for (var consumer : block.consumers) {
             if (consumer instanceof ConsumeItems ci) {
