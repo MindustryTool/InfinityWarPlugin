@@ -1,22 +1,26 @@
 package infinitywar;
 
-import java.lang.ref.WeakReference;
-import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import arc.Core;
 import arc.Events;
+import arc.struct.Seq;
 import mindustry.Vars;
 import mindustry.content.Blocks;
 import mindustry.content.Items;
 import mindustry.game.EventType.BlockBuildEndEvent;
+import mindustry.game.EventType.ResetEvent;
+import mindustry.game.EventType.WorldLoadEvent;
 import mindustry.gen.Building;
 import mindustry.gen.Groups;
 import mindustry.mod.Plugin;
+import mindustry.world.Block;
+import mindustry.world.consumers.Consume;
 import mindustry.world.consumers.ConsumeItemFilter;
 import mindustry.world.consumers.ConsumeItems;
 import mindustry.world.consumers.ConsumeLiquid;
@@ -25,95 +29,112 @@ import mindustry.world.consumers.ConsumeLiquids;
 
 public class InfinityWarPlugin extends Plugin {
 
-    private final Set<WeakReference<Building>> consumeBuildings = Collections
-            .newSetFromMap(new ConcurrentHashMap<WeakReference<Building>, Boolean>());
+    private final Set<Building> consumeBuildings = ConcurrentHashMap.newKeySet();
+    private final ConcurrentHashMap<Block, Seq<Consume>> blockConsumers = new ConcurrentHashMap<>();
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-    private long nextUpdateBuildTime = System.currentTimeMillis();
+    private final AtomicLong nextUpdateBuildTime = new AtomicLong(0);
 
     @Override
     public void init() {
         executor.scheduleWithFixedDelay(() -> {
             try {
-                if (!Vars.state.isPlaying())
+                if (!Vars.state.isPlaying()) {
                     return;
+                }
 
-                if (System.currentTimeMillis() >= nextUpdateBuildTime) {
+                long now = System.currentTimeMillis();
+
+                if (now >= nextUpdateBuildTime.get()) {
                     updateBuilding();
-                    nextUpdateBuildTime = System.currentTimeMillis() + 10000;
+                    nextUpdateBuildTime.set(now + 5000);
                 }
 
                 fillBuilding();
             } catch (Throwable e) {
                 e.printStackTrace();
             }
-        }, 0, 1, TimeUnit.SECONDS);
+        }, 0, 500, TimeUnit.MILLISECONDS);
 
         Events.on(BlockBuildEndEvent.class, event -> {
-            try {
-                if (event.tile.build == null) {
-                    return;
-                }
-
+            if (event.tile.build != null && isFillable(event.tile.build)) {
                 processBuild(event.tile.build);
-            } catch (Throwable e) {
-                e.printStackTrace();
+                consumeBuildings.add(event.tile.build);
             }
         });
+
+        Events.on(WorldLoadEvent.class, event -> clearCache());
+        Events.on(ResetEvent.class, event -> clearCache());
     }
 
-    private synchronized void updateBuilding() {
-        consumeBuildings.removeIf(ref -> ref.get() == null || !ref.get().isAdded());
+    private void clearCache() {
+        consumeBuildings.clear();
+        blockConsumers.clear();
+        nextUpdateBuildTime.set(0);
+    }
 
+    private void updateBuilding() {
+        // Remove invalid buildings
+        consumeBuildings.removeIf(build -> !build.isValid());
+
+        // Add missing buildings
         Groups.build.each(build -> {
             if (isFillable(build)) {
-                consumeBuildings.add(new WeakReference<>(build));
+                consumeBuildings.add(build);
             }
         });
     }
 
     public boolean isFillable(Building build) {
-        if (build == null)
-            return false;
-
-        if (consumeBuildings.stream().anyMatch(weak -> weak.get() == build)) {
+        if (build == null) {
             return false;
         }
 
-        for (var consumer : build.block.consumers) {
-            if (consumer instanceof ConsumeItems) {
-                return true;
-            } else if (consumer instanceof ConsumeLiquid) {
-                return true;
-            } else if (consumer instanceof ConsumeLiquids) {
-                return true;
-            } else if (consumer instanceof ConsumeItemFilter) {
-                return true;
-            } else if (consumer instanceof ConsumeLiquidFilter) {
-                return true;
+        Block block = build.block;
+
+        Seq<Consume> consumers = blockConsumers.get(block);
+
+        if (consumers == null) {
+            consumers = new Seq<>();
+            for (var consumer : block.consumers) {
+                if (consumer instanceof ConsumeItems ||
+                        consumer instanceof ConsumeLiquid ||
+                        consumer instanceof ConsumeLiquids ||
+                        consumer instanceof ConsumeItemFilter ||
+                        consumer instanceof ConsumeLiquidFilter) {
+                    consumers.add(consumer);
+                }
             }
+            blockConsumers.put(block, consumers);
         }
 
-        return false;
+        return consumers.size > 0;
     }
 
     private void fillBuilding() {
-        for (var weak : consumeBuildings) {
-            var build = weak.get();
-
-            if (build == null)
+        for (Building build : consumeBuildings) {
+            if (!build.isValid()) {
                 continue;
+            }
 
             processBuild(build);
         }
     }
 
     private void processBuild(Building build) {
-        var block = build.block;
+        Block block = build.block;
 
-        for (var consumer : block.consumers) {
+        Seq<Consume> consumers = blockConsumers.get(block);
+
+        if (consumers == null || consumers.size == 0) {
+            return;
+        }
+
+        for (var consumer : consumers) {
             if (consumer instanceof ConsumeItems ci) {
                 if (block == Blocks.thoriumReactor) {
-                    Core.app.post(() -> build.items.add(Items.thorium, 30 - build.items.get(Items.thorium)));
+                    if (build.items.get(Items.thorium) < 10) {
+                        Core.app.post(() -> build.items.add(Items.thorium, 30 - build.items.get(Items.thorium)));
+                    }
                     continue;
                 }
 
@@ -133,14 +154,14 @@ public class InfinityWarPlugin extends Plugin {
                     }
                 }
             } else if (consumer instanceof ConsumeItemFilter cif) {
-                for (var item : Vars.content.items().select(cif.filter)) {
-                    if (build.items.get(item) < 2000) {
+                for (var item : Vars.content.items()) {
+                    if (cif.filter.get(item) && build.items.get(item) < 2000) {
                         Core.app.post(() -> build.items.add(item, 2000));
                     }
                 }
             } else if (consumer instanceof ConsumeLiquidFilter clf) {
-                for (var liquid : Vars.content.liquids().select(clf.filter)) {
-                    if (build.liquids.get(liquid) < 2000) {
+                for (var liquid : Vars.content.liquids()) {
+                    if (clf.filter.get(liquid) && build.liquids.get(liquid) < 2000) {
                         Core.app.post(() -> build.liquids.add(liquid, 2000));
                     }
                 }
