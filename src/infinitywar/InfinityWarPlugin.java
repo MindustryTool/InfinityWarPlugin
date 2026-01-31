@@ -73,10 +73,8 @@ public class InfinityWarPlugin extends Plugin {
     }
 
     private void updateBuilding() {
-        // Remove invalid buildings
         consumeBuildings.removeIf(build -> !build.isValid());
 
-        // Add missing buildings
         Groups.build.each(build -> {
             if (isFillable(build)) {
                 consumeBuildings.add(build);
