@@ -57,7 +57,6 @@ public class InfinityWarPlugin extends Plugin {
 
         Events.on(BlockBuildEndEvent.class, event -> {
             if (event.tile.build != null && isFillable(event.tile.build)) {
-                processBuild(event.tile.build);
                 consumeBuildings.add(event.tile.build);
             }
         });
