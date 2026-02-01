@@ -127,43 +127,45 @@ public class InfinityWarPlugin extends Plugin {
             return;
         }
 
-        for (var consumer : consumers) {
-            if (consumer instanceof ConsumeItems ci) {
-                if (block == Blocks.thoriumReactor) {
-                    if (build.items.get(Items.thorium) < 10) {
-                        Core.app.post(() -> build.items.add(Items.thorium, 30 - build.items.get(Items.thorium)));
+        Core.app.post(() -> {
+            for (var consumer : consumers) {
+                if (consumer instanceof ConsumeItems ci) {
+                    if (block == Blocks.thoriumReactor) {
+                        if (build.items.get(Items.thorium) < 10) {
+                            build.items.add(Items.thorium, 30 - build.items.get(Items.thorium));
+                        }
+                        continue;
                     }
-                    continue;
-                }
 
-                for (var stack : ci.items) {
-                    if (build.items.get(stack.item) < 2000) {
-                        Core.app.post(() -> build.items.add(stack.item, 2000));
+                    for (var stack : ci.items) {
+                        if (build.items.get(stack.item) < 2000) {
+                            build.items.add(stack.item, 2000);
+                        }
                     }
-                }
-            } else if (consumer instanceof ConsumeLiquid cl) {
-                if (build.liquids.get(cl.liquid) < 2000) {
-                    Core.app.post(() -> build.liquids.add(cl.liquid, 2000));
-                }
-            } else if (consumer instanceof ConsumeLiquids cl) {
-                for (var stack : cl.liquids) {
-                    if (build.liquids.get(stack.liquid) < 2000) {
-                        Core.app.post(() -> build.liquids.add(stack.liquid, 2000));
+                } else if (consumer instanceof ConsumeLiquid cl) {
+                    if (build.liquids.get(cl.liquid) < 2000) {
+                        build.liquids.add(cl.liquid, 2000);
                     }
-                }
-            } else if (consumer instanceof ConsumeItemFilter cif) {
-                for (var item : Vars.content.items()) {
-                    if (cif.filter.get(item) && build.items.get(item) < 2000) {
-                        Core.app.post(() -> build.items.add(item, 2000));
+                } else if (consumer instanceof ConsumeLiquids cl) {
+                    for (var stack : cl.liquids) {
+                        if (build.liquids.get(stack.liquid) < 2000) {
+                            build.liquids.add(stack.liquid, 2000);
+                        }
                     }
-                }
-            } else if (consumer instanceof ConsumeLiquidFilter clf) {
-                for (var liquid : Vars.content.liquids()) {
-                    if (clf.filter.get(liquid) && build.liquids.get(liquid) < 2000) {
-                        Core.app.post(() -> build.liquids.add(liquid, 2000));
+                } else if (consumer instanceof ConsumeItemFilter cif) {
+                    for (var item : Vars.content.items()) {
+                        if (cif.filter.get(item) && build.items.get(item) < 2000) {
+                            build.items.add(item, 2000);
+                        }
+                    }
+                } else if (consumer instanceof ConsumeLiquidFilter clf) {
+                    for (var liquid : Vars.content.liquids()) {
+                        if (clf.filter.get(liquid) && build.liquids.get(liquid) < 2000) {
+                            build.liquids.add(liquid, 2000);
+                        }
                     }
                 }
             }
-        }
+        });
     }
 }
