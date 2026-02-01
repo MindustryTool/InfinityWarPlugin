@@ -46,14 +46,14 @@ public class InfinityWarPlugin extends Plugin {
 
                 if (now >= nextUpdateBuildTime.get()) {
                     updateBuilding();
-                    nextUpdateBuildTime.set(now + 5000);
+                    nextUpdateBuildTime.set(now + 1000);
                 }
 
                 fillBuilding();
             } catch (Throwable e) {
                 e.printStackTrace();
             }
-        }, 0, 500, TimeUnit.MILLISECONDS);
+        }, 0, 50, TimeUnit.MILLISECONDS);
 
         Events.on(BlockBuildEndEvent.class, event -> {
             if (event.tile.build != null && isFillable(event.tile.build)) {
